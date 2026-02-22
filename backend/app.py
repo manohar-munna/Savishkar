@@ -47,15 +47,26 @@ def chat():
     lang = data.get('language', 'en')
     history = data.get('history', [])
     
+    # 1. Grab the context from the frontend
+    disease_context = data.get('disease_context') 
+    
     if not GEMINI_API_KEY:
         return jsonify({"reply": "API Key Missing!"})
 
-    # NEW PROMPT: Strictly forbid Markdown/Stars
+    # 2. Build the System Prompt
     prompt = f"You are an expert Indian agricultural scientist.\n"
+    
+    # --- THIS IS THE MAGIC CONTEXT BLOCK WE WERE MISSING ---
+    if disease_context and disease_context != "Error":
+        prompt += f"CONTEXT: The farmer just scanned their crop and the AI detected '{disease_context}'. "
+        prompt += f"If the farmer asks 'what should I do', 'suggest things', 'how to fix', or 'what is this', ASSUME they are talking about '{disease_context}'. Do NOT ask them to describe the image.\n"
+    # -------------------------------------------------------
+
     prompt += f"Language: '{lang}'.\n"
     prompt += "CRITICAL RULE: DO NOT use markdown, asterisks (*), or bold text. Use plain text only. Keep answers under 3 sentences.\n\n"
     
-    for msg in history[-3:]: # Only keep last 3 messages for speed
+    # 3. Add Conversation History
+    for msg in history[-3:]: 
         sender = "Farmer" if msg['sender'] == 'user' else "Expert"
         prompt += f"{sender}: {msg['text']}\n"
     
@@ -64,7 +75,8 @@ def chat():
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
-        # Extra safety: remove any stars that sneak through
+        
+        # Clean the output
         clean_reply = response.text.replace('*', '') 
         return jsonify({"reply": clean_reply.strip()})
     except Exception as e:
