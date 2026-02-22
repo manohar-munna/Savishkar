@@ -1,0 +1,14 @@
+# Node / React
+node_modules/
+build/
+.env
+
+# Python
+__pycache__/
+venv/
+*.pyc
+
+# Database & Uploads
+backend/farm_data.db
+backend/uploads/*
+!backend/uploads/.gitkeep
