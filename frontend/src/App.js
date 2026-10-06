@@ -124,7 +124,7 @@ function App() {
         </div>
       )}
 
-      <Chatbot language={lang} />
+      <Chatbot language={lang} currentDisease={result?.disease} />
     </div>
   );
 }
